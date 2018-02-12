@@ -39,7 +39,7 @@
         import org.onosproject.core.CoreService;
 
 
-//import org.onosproject.simpleRouter.gatewayService;
+        import org.onosproject.simpleRouter.gatewayService;
         import org.slf4j.Logger;
         import org.slf4j.LoggerFactory;
         import java.util.ArrayList;
@@ -103,8 +103,8 @@ public class XmppManager implements xmpp_service{
     protected CoreService coreService;
 
 
-//    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-//    protected gatewayService GatewayService;
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected gatewayService GatewayService;
 
     private Thread thread;
     private volatile boolean xmpp_active = false;
@@ -163,16 +163,24 @@ public class XmppManager implements xmpp_service{
         {
             case "QUERY":
                 tag_sender.putIfAbsent(tag,orig_sender);
+                //send(orig_sender,"RESP",query,"127.0.0.1",tag);
                 send(admin+"_gnv_gw@xmpp.ipop-project.org","QUERY_IC",query,response,tag);
                 break;
             case "RESP":
                 break;
             case "QUERY_IC":
-                send(orig_sender,"RESP_IC",query,"127.0.0.1",tag);
+                // if allowed access for this device configure sdn firewall.
+                GatewayService.allow_access(4,query); // hardcoded for now.
+                send(orig_sender,"RESP_IC",query,"10.10.10.100",tag);
                 break;
             case "RESP_IC":
+                String mapped_addr = find_free_address();
+                String remote_addr = response;
+                GatewayService.populate_arped_addresseses(mapped_addr);
+                GatewayService.translate_address(mapped_addr,remote_addr,false);
+                GatewayService.translate_address(remote_addr,mapped_addr,true);
                 String target = tag_sender.get(tag);
-                send(target,"RESP",query,response,tag);
+                send(target,"RESP",query,mapped_addr,tag);
                 break;
         }
     }
@@ -183,6 +191,7 @@ public class XmppManager implements xmpp_service{
         {
             try
             {
+                GatewayService.do_something();
                 xmpp_active = true;
                 initialize_xmpp();
             }
@@ -193,6 +202,10 @@ public class XmppManager implements xmpp_service{
         }
     }
 
+    private String find_free_address()
+    {
+        return "192.168.1.101";
+    }
     private void initialize_xmpp() throws SmackException, IOException, XMPPException, InterruptedException
     {
         config = XMPPTCPConnectionConfiguration.builder()

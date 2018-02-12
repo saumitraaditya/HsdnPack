@@ -83,6 +83,7 @@ public class GatewayManager implements gatewayService{
     private Map<Ip4Address, Ip4Address> local_remote = Maps.newConcurrentMap(); //for mapping arp replies
     private Map<Ip4Address, Ip4Address> src_dst = Maps.newConcurrentMap(); //matches on dst address
     private Map<Ip4Address, Ip4Address> dst_src = Maps.newConcurrentMap(); //matches on src address
+    private Map<Ip4Address,PortNumber> access_map = Maps.newConcurrentMap(); //contains access rules
     private ApplicationId appId;
     private PacketProcessor processor;
     private DeviceListener deviceListener = new InnerDeviceListener();
@@ -105,9 +106,9 @@ public class GatewayManager implements gatewayService{
         packetService.requestPackets(DefaultTrafficSelector.builder()
                 .matchEthType(Ethernet.TYPE_ARP).build(), PacketPriority.REACTIVE, appId, Optional.empty());
 
-        populate_arped_candidates(Ip4Address.valueOf("192.168.1.101"));
-        translate_address("192.168.1.101","10.10.10.100",false);
-        translate_address("10.10.10.100","192.168.1.101",true);
+        //populate_arped_candidates(Ip4Address.valueOf("192.168.1.101"));
+        //translate_address("192.168.1.101","10.10.10.100",false);
+        //translate_address("10.10.10.100","192.168.1.101",true);
         //populate_arped_candidates(Ip4Address.valueOf("10.0.1.1"));
         //populate_arped_candidates(Ip4Address.valueOf("10.0.2.1"));
         //populate_arped_candidates(Ip4Address.valueOf("10.0.3.1"));
@@ -146,7 +147,7 @@ public class GatewayManager implements gatewayService{
                 }
 
             }
-            else
+            else if (pc.inPacket().parsed().getEtherType()==Ethernet.TYPE_IPV4)
             {
                 /*
                 * check to see ip address matches
@@ -158,6 +159,21 @@ public class GatewayManager implements gatewayService{
                 log.info(IpAddress.valueOf(ipv4.getSourceAddress()).toString());
                 log.info(IpAddress.valueOf(ipv4.getDestinationAddress()).toString());
                 log.info(dst_add.toString());
+                PortNumber incoming_port = cp.port();
+                /*
+                if this node did not initiate dns request it does
+                * not knows the ip4 address of the device that will connect to
+                * it.
+                * */
+                if (access_map.get(dst_add)==incoming_port){
+                    if (!src_dst.containsKey(src_add))
+                    {
+                        Ip4Address mapped_src = find_free_address();
+                        src_dst.putIfAbsent(src_add,mapped_src);
+                        dst_src.putIfAbsent(mapped_src,src_add);
+                        populate_arped_candidates(mapped_src);
+                    }
+                }
                 if (dst_src.containsKey(dst_add)) {
                     TrafficSelector selector = DefaultTrafficSelector.builder()
                             .matchEthType(Ethernet.TYPE_IPV4)
@@ -208,6 +224,10 @@ public class GatewayManager implements gatewayService{
         }
     }
 
+    private Ip4Address find_free_address()
+    {
+        return Ip4Address.valueOf("10.10.10.101");
+    }
     private class InnerDeviceListener implements DeviceListener
     {
         @Override
@@ -287,6 +307,13 @@ public class GatewayManager implements gatewayService{
 
     }
 
+    /* port binds to tunnel, one for each user
+    * address binds to device, allow access to device
+    * for incoming traffic from this port.*/
+    public void allow_access(long port, String address)
+    {
+        access_map.putIfAbsent(Ip4Address.valueOf(address),PortNumber.portNumber(port));
+    }
 
     public void remove_arped_candidates(String address){
         // will have to handle removal
