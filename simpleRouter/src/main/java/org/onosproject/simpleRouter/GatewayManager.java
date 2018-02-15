@@ -124,11 +124,11 @@ public class GatewayManager implements gatewayService{
     {
         @Override
         public void process(PacketContext pc) {
-            log.info(pc.toString());
-            log.info(pc.inPacket().receivedFrom().toString());
+            //log.info(pc.toString());
+            //log.info(pc.inPacket().receivedFrom().toString());
             ConnectPoint cp = pc.inPacket().receivedFrom();
             switch_mac = MacAddress.valueOf(getMacAddress(cp));
-            log.info("switch_mac "+switch_mac);
+            //log.info("switch_mac "+switch_mac);
             System.out.println(pc.inPacket().parsed().getEtherType());
             System.out.println(Ethernet.TYPE_ARP);
             if (pc.inPacket().parsed().getEtherType()==Ethernet.TYPE_ARP)
@@ -136,7 +136,7 @@ public class GatewayManager implements gatewayService{
                 ARP arp = (ARP)pc.inPacket().parsed().getPayload();
                 byte[] b = arp.getTargetProtocolAddress();
                 Ip4Address ipaddress = Ip4Address.valueOf(b);
-                log.info(pc.inPacket().parsed().getDestinationMACAddress().toString());
+                //log.info(pc.inPacket().parsed().getDestinationMACAddress().toString());
                 if (local_remote.containsKey(ipaddress)) {
                     TrafficTreatment treatment = DefaultTrafficTreatment.builder().setOutput(cp.port()).build();
                     Ethernet eth = createArpResponse(pc,ipaddress);
@@ -155,17 +155,19 @@ public class GatewayManager implements gatewayService{
                 IPv4 ipv4 = (IPv4) pc.inPacket().parsed().getPayload();
                 Ip4Address src_add = Ip4Address.valueOf(ipv4.getSourceAddress());
                 Ip4Address dst_add = Ip4Address.valueOf(ipv4.getDestinationAddress());
-                log.info(src_add.toString());
-                log.info(IpAddress.valueOf(ipv4.getSourceAddress()).toString());
-                log.info(IpAddress.valueOf(ipv4.getDestinationAddress()).toString());
-                log.info(dst_add.toString());
+                //log.info(src_add.toString());
+                //log.info(IpAddress.valueOf(ipv4.getSourceAddress()).toString());
+                //log.info(IpAddress.valueOf(ipv4.getDestinationAddress()).toString());
+                //log.info(dst_add.toString());
                 PortNumber incoming_port = cp.port();
                 /*
                 if this node did not initiate dns request it does
                 * not knows the ip4 address of the device that will connect to
                 * it.
                 * */
-                if (access_map.get(dst_add)==incoming_port){
+                PortNumber pn = access_map.get(dst_add);
+                if (pn!=null && pn.exactlyEquals(incoming_port))
+                {
                     if (!src_dst.containsKey(src_add))
                     {
                         Ip4Address mapped_src = find_free_address();
@@ -174,6 +176,7 @@ public class GatewayManager implements gatewayService{
                         populate_arped_candidates(mapped_src);
                     }
                 }
+
                 if (dst_src.containsKey(dst_add)) {
                     TrafficSelector selector = DefaultTrafficSelector.builder()
                             .matchEthType(Ethernet.TYPE_IPV4)
@@ -278,7 +281,7 @@ public class GatewayManager implements gatewayService{
         //log.info(did.substring(did.length()-12));
         //log.info(MacAddress.valueOf(did.substring(did.length()-12)).toString());
         String s_mac = new String(mac);
-        log.info(s_mac);
+        //log.info(s_mac);
         return s_mac;
     }
     private Ethernet createArpResponse(PacketContext pc, Ip4Address ipaddress) {
