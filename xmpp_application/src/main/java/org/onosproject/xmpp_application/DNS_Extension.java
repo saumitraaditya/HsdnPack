@@ -35,6 +35,7 @@ public class DNS_Extension implements ExtensionElement
         xml.attribute(SETUP, get_setup());
         xml.attribute(QUERY, get_query());
         xml.attribute(RESPONSE, get_resp());
+        xml.attribute(TAG,get_tag());
         xml.closeEmptyElement();
         return xml;
     }
@@ -60,12 +61,12 @@ public class DNS_Extension implements ExtensionElement
 
     public String get_tag(){return tag;}
 
-    public void set_interfaces(String _setup, String _query, String _resp,String tag)
+    public void set_interfaces(String _setup, String _query, String _resp,String _tag)
     {
         this.setup = _setup;
         this.query = _query;
         this.resp = _resp;
-        this.tag = tag;
+        this.tag = _tag;
     }
 
     public ArrayList<String> get_interfaces()

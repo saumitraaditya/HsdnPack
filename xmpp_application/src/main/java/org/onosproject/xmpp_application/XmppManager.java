@@ -169,9 +169,12 @@ public class XmppManager implements xmpp_service{
             case "RESP":
                 break;
             case "QUERY_IC":
-                // if allowed access for this device configure sdn firewall.
-                GatewayService.allow_access(4,query); // hardcoded for now.
-                send(orig_sender,"RESP_IC",query,"10.10.10.100",tag);
+                /* need to do a name query to check availability and to get back IP address of the device*/
+                tag_sender.putIfAbsent(tag,orig_sender);
+                String dname = query.split(".")[0];
+                send(dname+"@xmpp.ipop-project.org","NAME_QUERY",query,response,tag);
+                //GatewayService.allow_access(4,"10.10.10.100"); // hardcoded for now.
+                //send(orig_sender,"RESP_IC",query,"10.10.10.100",tag);
                 break;
             case "RESP_IC":
                 String mapped_addr = find_free_address();
@@ -181,6 +184,11 @@ public class XmppManager implements xmpp_service{
                 GatewayService.translate_address(remote_addr,mapped_addr,true);
                 String target = tag_sender.get(tag);
                 send(target,"RESP",query,mapped_addr,tag);
+                break;
+            case "NAME_RESP":
+                String sendto = tag_sender.get(tag);
+                GatewayService.allow_access(4,response);
+                send(sendto,"RESP_IC",query,response,tag);
                 break;
         }
     }
