@@ -158,7 +158,11 @@ public class GatewayManager implements gatewayService{
                 //log.info(src_add.toString());
                 //log.info(IpAddress.valueOf(ipv4.getSourceAddress()).toString());
                 //log.info(IpAddress.valueOf(ipv4.getDestinationAddress()).toString());
+<<<<<<< HEAD
+                //log.info(dst_add.toString());
+=======
                // log.info(dst_add.toString());
+>>>>>>> 627e57511ae01c19fe9df5467bd0e8054c5f0204
                 PortNumber incoming_port = cp.port();
                 /*
                 if this node did not initiate dns request it does
@@ -166,6 +170,10 @@ public class GatewayManager implements gatewayService{
                 * it.
                 * */
                 PortNumber pn = access_map.get(dst_add);
+<<<<<<< HEAD
+                if (pn!=null && pn.exactlyEquals(incoming_port))
+                {
+=======
                 if (pn != null)
                     log.info("port number is "+pn.toLong());
                 else
@@ -173,6 +181,7 @@ public class GatewayManager implements gatewayService{
                 log.info("incoming port number is "+incoming_port.toLong());
                 log.info("COMPARE PORT's ");
                 if (pn != null && pn.exactlyEquals(incoming_port)){
+>>>>>>> 627e57511ae01c19fe9df5467bd0e8054c5f0204
                     if (!src_dst.containsKey(src_add))
                     {
                         Ip4Address mapped_src = find_free_address();
