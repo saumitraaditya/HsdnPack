@@ -213,7 +213,7 @@ public class GatewayManager implements gatewayService{
                     TrafficTreatment treatment = DefaultTrafficTreatment.builder()
                             .setEthDst(MacAddress.valueOf("FF:FF:FF:FF:FF:FF"))
                             .setIpSrc(IpAddress.valueOf(src_dst.get(src_add).toString()))
-                            .setOutput(PortNumber.portNumber(4))
+                            .setOutput(PortNumber.portNumber(6))
                             .build();
                     FlowRule fr = DefaultFlowRule.builder()
                             .withSelector(selector)
